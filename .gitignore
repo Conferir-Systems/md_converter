@@ -17,3 +17,4 @@ __pycache__/
 
 # Generated test fixtures
 fixtures/out/
+fixtures/saída-teste/
