@@ -1,0 +1,5 @@
+# Only used by fixtures/make_fixtures.py — never imported by bridge.py,
+# so PyInstaller's static analysis keeps these out of the shipped sidecar.
+python-docx
+fpdf2
+xlwt
