@@ -8,11 +8,34 @@
 </head>
 <body>
   <main class="app">
-    <h1>MarkItDown GUI</h1>
-    <p class="muted">Step 2 — IPC skeleton with fake converter</p>
-    <div id="drop" class="drop">Drop files here to test path resolution</div>
-    <button id="pick">Select files…</button>
-    <pre id="out"></pre>
+    <header class="topbar">
+      <div>
+        <h1>MarkItDown GUI</h1>
+        <p class="muted">Convert documents to Markdown</p>
+      </div>
+      <button id="convert" class="primary" disabled>Convert all</button>
+    </header>
+
+    <section class="controls">
+      <button id="pick">Add files…</button>
+      <div class="outdir">
+        <span id="outdir-label" class="muted">Output: same folder as each file</span>
+        <button id="choose-outdir">Choose folder…</button>
+        <button id="reset-outdir" hidden title="Back to per-file folders">×</button>
+      </div>
+      <span class="spacer"></span>
+      <button id="open-outdir" disabled>Open output folder</button>
+      <button id="clear" disabled>Clear list</button>
+    </section>
+
+    <p id="banner" class="banner" hidden></p>
+
+    <section id="drop" class="drop">
+      <p>Drag &amp; drop documents here</p>
+      <p class="muted small">PDF · Word · PowerPoint · Excel · CSV · JSON · XML · HTML · TXT · ZIP</p>
+    </section>
+
+    <ul id="list" class="list"></ul>
   </main>
   <script src="renderer.js"></script>
 </body>

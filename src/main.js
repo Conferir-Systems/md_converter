@@ -59,7 +59,7 @@ async function runQueue (planned, report) {
       report({ id: job.id, status: 'converting' })
       const result = await convertFile(job.input, job.output)
       if (result.ok) {
-        report({ id: job.id, status: 'done', output: result.output, bytes: result.bytes })
+        report({ id: job.id, status: 'done', output: result.output, outputDir: path.dirname(result.output), bytes: result.bytes })
       } else {
         report({ id: job.id, status: 'error', error: result.error, code: result.code })
       }
@@ -88,34 +88,66 @@ function createWindow () {
   win.once('ready-to-show', () => win.show())
   win.loadFile(path.join(__dirname, 'index.html'))
 
+  setupDevHooks(win)
+  return win
+}
+
+// Dev-only self-test hooks, inert unless the env vars are set:
+//   MDGUI_SHOT=<png>     screenshot the window and quit
+//   MDGUI_UITEST=<dir>   feed every file in <dir> through the real UI, then quit
+async function captureShot (win) {
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    try {
+      const img = await win.webContents.capturePage()
+      if (!img.isEmpty()) {
+        fs.writeFileSync(process.env.MDGUI_SHOT, img.toPNG())
+        console.log('smoke-test: screenshot written')
+        return
+      }
+    } catch (err) {
+      console.error(`smoke-test capture attempt ${attempt} failed: ${err}`)
+    }
+    await new Promise(resolve => setTimeout(resolve, 500))
+  }
+}
+
+function setupDevHooks (win) {
+  if (process.env.MDGUI_UITEST) {
+    win.once('show', () => setTimeout(async () => {
+      const dir = process.env.MDGUI_UITEST
+      const files = fs.readdirSync(dir)
+        .map(name => path.join(dir, name))
+        .filter(file => fs.statSync(file).isFile())
+      await win.webContents.executeJavaScript(`addFiles(${JSON.stringify(files)})`)
+      await win.webContents.executeJavaScript("document.getElementById('convert').click()")
+      const deadline = Date.now() + 300000
+      while (Date.now() < deadline) {
+        const busy = await win.webContents.executeJavaScript('state.running')
+        if (!busy) break
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+      const text = await win.webContents.executeJavaScript('document.body.innerText')
+      console.log(`uitest: page text = ${JSON.stringify(text)}`)
+      if (process.env.MDGUI_SHOT) await captureShot(win)
+      app.exit(0)
+    }, 1000))
+    return
+  }
+
   if (process.env.MDGUI_SHOT) {
     win.once('show', () => setTimeout(async () => {
       try {
         const isolated = await win.webContents.executeJavaScript('typeof require')
         console.log(`smoke-test: typeof require in renderer = ${isolated}`)
-        const out = await win.webContents.executeJavaScript("document.getElementById('out')?.textContent ?? ''")
-        console.log(`smoke-test: #out = ${out}`)
+        const text = await win.webContents.executeJavaScript('document.body.innerText')
+        console.log(`smoke-test: page text = ${JSON.stringify(text)}`)
       } catch (err) {
         console.error(`smoke-test isolation check failed: ${err}`)
       }
-      for (let attempt = 1; attempt <= 5; attempt++) {
-        try {
-          const img = await win.webContents.capturePage()
-          if (!img.isEmpty()) {
-            fs.writeFileSync(process.env.MDGUI_SHOT, img.toPNG())
-            console.log('smoke-test: screenshot written')
-            break
-          }
-        } catch (err) {
-          console.error(`smoke-test capture attempt ${attempt} failed: ${err}`)
-        }
-        await new Promise(resolve => setTimeout(resolve, 500))
-      }
+      await captureShot(win)
       app.quit()
     }, 1500))
   }
-
-  return win
 }
 
 function registerIpcHandlers () {
