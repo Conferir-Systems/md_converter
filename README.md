@@ -33,6 +33,12 @@ Two artifacts are produced in `release/`:
 
 ## Notes and limitations
 
+- The interface follows your Windows preferred display language: Portuguese
+  when the preference list starts with `pt`, English otherwise. Set the
+  `MDGUI_LANG` environment variable (`pt` or `en`) to force one. Technical
+  diagnostics coming from the converter itself stay in English.
+- Individual conversions can be canceled while a batch runs (Cancel on the
+  row); canceled rows can be re-converted later.
 - Generic `.xml` files pass through as plain text (markitdown has no
   structural XML converter; RSS/Atom feeds are the exception).
 - Output files are always UTF-8. Name collisions are auto-suffixed

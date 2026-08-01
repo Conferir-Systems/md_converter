@@ -2,6 +2,7 @@ const path = require('node:path')
 const fs = require('node:fs')
 const { spawn } = require('node:child_process')
 const { app } = require('electron')
+const { t } = require('./i18n')
 
 const BRIDGE_TIMEOUT_MS = 120000
 const STDERR_TAIL_LINES = 10
@@ -32,7 +33,9 @@ function tail (text, lines) {
   return text.split(/\r?\n/).filter(Boolean).slice(-lines).join('\n')
 }
 
-function convertFile (input, output) {
+// hooks.onSpawn receives a cancel() function that kills this conversion and
+// resolves it with code CANCELED instead of BRIDGE_CRASH.
+function convertFile (input, output, hooks = {}) {
   return new Promise(resolve => {
     const bridge = resolveBridge()
     const child = spawn(bridge.command, bridge.args, {
@@ -45,6 +48,7 @@ function convertFile (input, output) {
 
     let settled = false
     let timedOut = false
+    let canceled = false
     const stdoutChunks = []
     const stderrChunks = []
 
@@ -61,12 +65,15 @@ function convertFile (input, output) {
       child.kill()
     }, BRIDGE_TIMEOUT_MS)
 
-    child.on('error', err => {
-      settle({
-        ok: false,
-        error: `Could not start the converter (${bridge.command}): ${err.message}. If an antivirus quarantined it, restore the file.`,
-        code: 'BRIDGE_CRASH'
+    if (hooks.onSpawn) {
+      hooks.onSpawn(() => {
+        canceled = true
+        child.kill()
       })
+    }
+
+    child.on('error', err => {
+      settle({ ok: false, error: t('errSpawn', bridge.command, err.message), code: 'BRIDGE_CRASH' })
     })
 
     // EPIPE lands here when the child dies before reading its stdin; the
@@ -79,26 +86,22 @@ function convertFile (input, output) {
     child.on('close', code => {
       const stdout = Buffer.concat(stdoutChunks).toString('utf8')
       const stderr = Buffer.concat(stderrChunks).toString('utf8')
+      if (canceled) {
+        settle({ ok: false, error: t('canceled'), code: 'CANCELED' })
+        return
+      }
       if (timedOut) {
-        settle({ ok: false, error: 'Conversion timed out after 120 seconds', code: 'TIMEOUT' })
+        settle({ ok: false, error: t('errTimeout'), code: 'TIMEOUT' })
         return
       }
       if (code !== 0) {
-        settle({
-          ok: false,
-          error: `Converter crashed (exit ${code}, ${bridge.command}). ${tail(stderr, STDERR_TAIL_LINES) || 'No diagnostic output.'}`,
-          code: 'BRIDGE_CRASH'
-        })
+        settle({ ok: false, error: t('errCrash', code, bridge.command, tail(stderr, STDERR_TAIL_LINES)), code: 'BRIDGE_CRASH' })
         return
       }
       try {
         settle(JSON.parse(stdout))
       } catch {
-        settle({
-          ok: false,
-          error: `Converter returned unreadable output (${bridge.command}). ${tail(stderr, STDERR_TAIL_LINES) || ''}`.trim(),
-          code: 'BRIDGE_CRASH'
-        })
+        settle({ ok: false, error: t('errUnreadable', bridge.command, tail(stderr, STDERR_TAIL_LINES)), code: 'BRIDGE_CRASH' })
       }
     })
 

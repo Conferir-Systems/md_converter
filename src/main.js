@@ -2,12 +2,15 @@ const path = require('node:path')
 const fs = require('node:fs')
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const { convertFile, resolveBridge, killAll } = require('./bridge')
+const { t, language } = require('./i18n')
 
 const SUPPORTED_EXTENSIONS = ['pdf', 'docx', 'pptx', 'xlsx', 'xls', 'csv', 'json', 'xml', 'html', 'htm', 'txt', 'zip']
 const CONCURRENCY = 2
 
 let lastDialogDir = app.getPath('documents')
 let batchActive = false
+const cancelRequested = new Set()
+const activeCancels = new Map()
 
 // Validates every job and reserves a unique output path for the whole batch
 // up front — an exists-check at write time would race between the two workers.
@@ -16,20 +19,20 @@ function planJobs (jobs) {
   return jobs.map(job => {
     const { id, input } = job
     if (typeof input !== 'string' || input.length === 0) {
-      return { id, input, error: 'Invalid file path' }
+      return { id, input, error: t('errInvalidPath') }
     }
     let stat
     try {
       stat = fs.statSync(input)
     } catch {
-      return { id, input, error: 'File not found' }
+      return { id, input, error: t('errNotFound') }
     }
     if (!stat.isFile()) {
-      return { id, input, error: 'Not a file (folders are not supported)' }
+      return { id, input, error: t('errNotFile') }
     }
     const extension = path.extname(input).slice(1).toLowerCase()
     if (!SUPPORTED_EXTENSIONS.includes(extension)) {
-      return { id, input, error: `Unsupported file type: .${extension || '(none)'}` }
+      return { id, input, error: t('errUnsupported', extension || '(?)') }
     }
     const dir = typeof job.outputDir === 'string' && job.outputDir.length > 0 ? job.outputDir : path.dirname(input)
     const base = path.basename(input, path.extname(input))
@@ -56,8 +59,21 @@ async function runQueue (planned, report) {
         results.push({ id: job.id, ok: false, error: job.error, code: 'INVALID_INPUT' })
         continue
       }
+      if (cancelRequested.has(job.id)) {
+        report({ id: job.id, status: 'canceled' })
+        results.push({ id: job.id, ok: false, error: t('canceled'), code: 'CANCELED' })
+        continue
+      }
       report({ id: job.id, status: 'converting' })
-      const result = await convertFile(job.input, job.output)
+      const result = await convertFile(job.input, job.output, {
+        onSpawn: cancel => activeCancels.set(job.id, cancel)
+      })
+      activeCancels.delete(job.id)
+      if (result.code === 'CANCELED') {
+        report({ id: job.id, status: 'canceled' })
+        results.push({ id: job.id, ...result })
+        continue
+      }
       if (result.ok) {
         report({ id: job.id, status: 'done', output: result.output, outputDir: path.dirname(result.output), bytes: result.bytes })
       } else {
@@ -120,6 +136,10 @@ function setupDevHooks (win) {
         .filter(file => fs.statSync(file).isFile())
       await win.webContents.executeJavaScript(`addFiles(${JSON.stringify(files)})`)
       await win.webContents.executeJavaScript("document.getElementById('convert').click()")
+      if (process.env.MDGUI_UITEST_CANCEL) {
+        await new Promise(resolve => setTimeout(resolve, 400))
+        await win.webContents.executeJavaScript("[...document.querySelectorAll('#list li .row-cancel')].at(-1)?.click()")
+      }
       const deadline = Date.now() + 300000
       while (Date.now() < deadline) {
         const busy = await win.webContents.executeJavaScript('state.running')
@@ -151,15 +171,21 @@ function setupDevHooks (win) {
 }
 
 function registerIpcHandlers () {
+  // sendSync on purpose: the renderer needs the language before first paint,
+  // and this is a single in-memory lookup at page load.
+  ipcMain.on('get-locale', event => {
+    event.returnValue = language()
+  })
+
   ipcMain.handle('select-files', async event => {
     const win = BrowserWindow.fromWebContents(event.sender)
     const result = await dialog.showOpenDialog(win, {
-      title: 'Select documents to convert',
+      title: t('dialogSelectFiles'),
       defaultPath: lastDialogDir,
       properties: ['openFile', 'multiSelections'],
       filters: [
-        { name: 'Documents', extensions: SUPPORTED_EXTENSIONS },
-        { name: 'All files', extensions: ['*'] }
+        { name: t('filterDocuments'), extensions: SUPPORTED_EXTENSIONS },
+        { name: t('filterAll'), extensions: ['*'] }
       ]
     })
     if (result.canceled || result.filePaths.length === 0) return []
@@ -170,7 +196,7 @@ function registerIpcHandlers () {
   ipcMain.handle('select-output-dir', async event => {
     const win = BrowserWindow.fromWebContents(event.sender)
     const result = await dialog.showOpenDialog(win, {
-      title: 'Select output folder',
+      title: t('dialogSelectOutput'),
       defaultPath: lastDialogDir,
       properties: ['openDirectory', 'createDirectory']
     })
@@ -181,23 +207,34 @@ function registerIpcHandlers () {
 
   ipcMain.handle('open-folder', async (event, dir) => {
     if (typeof dir !== 'string' || !fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) {
-      return { ok: false, error: 'Not a folder' }
+      return { ok: false, error: t('errNotFolder') }
     }
     const result = await shell.openPath(dir)
     return result === '' ? { ok: true } : { ok: false, error: result }
   })
 
   ipcMain.handle('convert-all', async (event, jobs) => {
-    if (batchActive) return { ok: false, error: 'A conversion batch is already running' }
-    if (!Array.isArray(jobs) || jobs.length === 0) return { ok: false, error: 'No files to convert' }
+    if (batchActive) return { ok: false, error: t('errBatchRunning') }
+    if (!Array.isArray(jobs) || jobs.length === 0) return { ok: false, error: t('errNoFiles') }
     batchActive = true
+    cancelRequested.clear()
+    activeCancels.clear()
     try {
       const planned = planJobs(jobs)
       const results = await runQueue(planned, update => event.sender.send('conversion-progress', update))
       return { ok: true, results }
     } finally {
       batchActive = false
+      cancelRequested.clear()
+      activeCancels.clear()
     }
+  })
+
+  ipcMain.handle('cancel-job', (event, id) => {
+    cancelRequested.add(id)
+    const cancel = activeCancels.get(id)
+    if (cancel) cancel()
+    return { ok: true }
   })
 }
 

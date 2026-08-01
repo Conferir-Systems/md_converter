@@ -1,9 +1,11 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron')
 
 contextBridge.exposeInMainWorld('markitdown', {
+  locale: ipcRenderer.sendSync('get-locale'),
   selectFiles: () => ipcRenderer.invoke('select-files'),
   selectOutputDir: () => ipcRenderer.invoke('select-output-dir'),
   convertAll: jobs => ipcRenderer.invoke('convert-all', jobs),
+  cancelJob: id => ipcRenderer.invoke('cancel-job', id),
   openFolder: dir => ipcRenderer.invoke('open-folder', dir),
   pathForDroppedFile: file => webUtils.getPathForFile(file),
   onProgress: callback => {

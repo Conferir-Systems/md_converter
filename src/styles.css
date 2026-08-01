@@ -164,6 +164,7 @@ button.primary {
 .chip.converting { color: var(--busy); animation: pulse 1.1s ease-in-out infinite; }
 .chip.done { color: var(--ok); }
 .chip.error { color: var(--err); }
+.chip.canceled { opacity: 0.4; text-decoration: line-through; }
 
 @keyframes pulse {
   50% { opacity: 0.35; }
