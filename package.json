@@ -1,0 +1,18 @@
+{
+  "name": "markitdown-gui",
+  "productName": "MarkItDown GUI",
+  "version": "0.1.0",
+  "description": "Desktop GUI for Microsoft's markitdown document-to-Markdown converter",
+  "main": "src/main.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build:py": "powershell -ExecutionPolicy Bypass -File python/build.ps1",
+    "build:win": "electron-builder --win",
+    "dist": "npm run build:py && npm run build:win"
+  },
+  "devDependencies": {
+    "electron": "43.2.0",
+    "electron-builder": "26.15.7"
+  }
+}

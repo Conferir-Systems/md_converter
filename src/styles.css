@@ -1,0 +1,23 @@
+:root {
+  color-scheme: light dark;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+body {
+  padding: 24px;
+}
+
+.app h1 {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.muted {
+  opacity: 0.6;
+  margin-top: 8px;
+}

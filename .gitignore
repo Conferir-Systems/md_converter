@@ -1,0 +1,19 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Build output
+release/
+
+# PyInstaller output (rebuilt by python/build.ps1, copied here by the dist script)
+resources/py/
+
+# Python
+python/.venv/
+python/build/
+python/dist/
+*.spec
+__pycache__/
+
+# Generated test fixtures
+fixtures/out/
