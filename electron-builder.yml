@@ -1,0 +1,22 @@
+appId: com.example.markitdowngui
+productName: MarkItDown GUI
+directories:
+  output: release
+  buildResources: build
+files:
+  - src/**/*
+  - package.json
+extraResources:
+  - from: resources/py
+    to: py
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  icon: build/icon.ico
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false

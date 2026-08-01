@@ -19,7 +19,7 @@ $buildArgs = @(
   '--name', 'markitdown-bridge',
   '--collect-data', 'magika',
   '--collect-submodules', 'markitdown',
-  '--collect-dynamic-libs', 'onnxruntime',
+  '--collect-binaries', 'onnxruntime',
   '--exclude-module', 'tkinter',
   'bridge.py'
 )
