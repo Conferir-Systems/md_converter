@@ -1,5 +1,5 @@
 appId: com.example.markitdowngui
-productName: MarkItDown GUI
+productName: MD Converter
 directories:
   output: release
   buildResources: build

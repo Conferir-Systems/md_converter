@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'">
@@ -11,27 +11,27 @@
     <header class="topbar">
       <div>
         <h1>MarkItDown GUI</h1>
-        <p class="muted" id="subtitle">Convert documents to Markdown</p>
+        <p class="muted" id="subtitle">Converta documentos para Markdown</p>
       </div>
-      <button id="convert" class="primary" disabled>Convert all</button>
+      <button id="convert" class="primary" disabled>Converter tudo</button>
     </header>
 
     <section class="controls">
-      <button id="pick">Add files…</button>
+      <button id="pick">Adicionar arquivos…</button>
       <div class="outdir">
-        <span id="outdir-label" class="muted">Output: same folder as each file</span>
-        <button id="choose-outdir">Choose folder…</button>
-        <button id="reset-outdir" hidden title="Back to per-file folders">×</button>
+        <span id="outdir-label" class="muted">Saída: mesma pasta de cada arquivo</span>
+        <button id="choose-outdir">Escolher pasta…</button>
+        <button id="reset-outdir" hidden title="Voltar para a pasta de cada arquivo">×</button>
       </div>
       <span class="spacer"></span>
-      <button id="open-outdir" disabled>Open output folder</button>
-      <button id="clear" disabled>Clear list</button>
+      <button id="open-outdir" disabled>Abrir pasta de saída</button>
+      <button id="clear" disabled>Limpar lista</button>
     </section>
 
     <p id="banner" class="banner" hidden></p>
 
     <section id="drop" class="drop">
-      <p id="drop-title">Drag &amp; drop documents here</p>
+      <p id="drop-title">Arraste e solte documentos aqui</p>
       <p class="muted small">PDF · Word · PowerPoint · Excel · CSV · JSON · XML · HTML · TXT · ZIP</p>
     </section>
 

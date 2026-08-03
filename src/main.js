@@ -2,7 +2,7 @@ const path = require('node:path')
 const fs = require('node:fs')
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
 const { convertFile, resolveBridge, killAll } = require('./bridge')
-const { t, language } = require('./i18n')
+const { t } = require('./i18n')
 
 const SUPPORTED_EXTENSIONS = ['pdf', 'docx', 'pptx', 'xlsx', 'xls', 'csv', 'json', 'xml', 'html', 'htm', 'txt', 'zip']
 const CONCURRENCY = 2
@@ -171,12 +171,6 @@ function setupDevHooks (win) {
 }
 
 function registerIpcHandlers () {
-  // sendSync on purpose: the renderer needs the language before first paint,
-  // and this is a single in-memory lookup at page load.
-  ipcMain.on('get-locale', event => {
-    event.returnValue = language()
-  })
-
   ipcMain.handle('select-files', async event => {
     const win = BrowserWindow.fromWebContents(event.sender)
     const result = await dialog.showOpenDialog(win, {
