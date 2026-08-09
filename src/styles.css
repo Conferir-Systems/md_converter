@@ -131,7 +131,9 @@ body {
   gap: 16px;
 }
 
-.brand {
+/* The topbar's two children */
+.brand,
+.topbar-actions {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -241,6 +243,17 @@ body {
 .btn-icon svg {
   width: 13px;
   height: 13px;
+}
+
+/* Roomier hit target for icon buttons that sit on their own, not inline in a row */
+.btn-icon-lg {
+  width: 32px;
+  height: 32px;
+}
+
+.btn-icon-lg svg {
+  width: 17px;
+  height: 17px;
 }
 
 .controls {

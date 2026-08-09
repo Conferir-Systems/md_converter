@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('markitdown', {
   convertAll: jobs => ipcRenderer.invoke('convert-all', jobs),
   cancelJob: id => ipcRenderer.invoke('cancel-job', id),
   openFolder: dir => ipcRenderer.invoke('open-folder', dir),
+  setTheme: value => ipcRenderer.invoke('set-theme', value),
   pathForDroppedFile: file => webUtils.getPathForFile(file),
   onProgress: callback => {
     ipcRenderer.on('conversion-progress', (event, update) => callback(update))

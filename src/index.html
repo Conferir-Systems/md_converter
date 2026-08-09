@@ -16,8 +16,12 @@
           <p class="subtitle">Converta documentos para Markdown</p>
         </div>
       </div>
-      <!-- Empty on purpose: renderer.js owns this label, it toggles while running -->
-      <button id="convert" class="btn btn-primary" disabled></button>
+      <div class="topbar-actions">
+        <!-- Empty on purpose: renderer.js owns the icon and the label, both flip with the theme -->
+        <button id="theme-toggle" class="btn btn-icon btn-icon-lg btn-ghost"></button>
+        <!-- Empty on purpose: renderer.js owns this label, it toggles while running -->
+        <button id="convert" class="btn btn-primary" disabled></button>
+      </div>
     </header>
 
     <section class="controls">

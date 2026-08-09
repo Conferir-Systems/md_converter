@@ -6,6 +6,8 @@ const L = {
   rowOpen: 'Abrir pasta',
   rowCancel: 'Cancelar',
   rowRemove: 'Remover da lista',
+  themeToDark: 'Mudar para o tema escuro',
+  themeToLight: 'Mudar para o tema claro',
   unexpected: 'Erro inesperado: ',
   status: { pending: 'pendente', converting: 'convertendo', done: 'concluído', error: 'erro', canceled: 'cancelada' }
 }
@@ -14,7 +16,9 @@ const L = {
 // ever sit on static markup stay inline in index.html.
 const ICON_MARKUP = {
   folderOpen: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19l2.757 -7.351a1 1 0 0 1 .936 -.649h12.307a1 1 0 0 1 .986 1.164l-.996 5.211a2 2 0 0 1 -1.964 1.625h-14.026a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2h4l3 3h7a2 2 0 0 1 2 2v2" /></svg>',
-  x: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>'
+  x: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>',
+  sun: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7" /></svg>',
+  moon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg>'
 }
 
 // Parsed once at load; every icon() call hands out a clone.
@@ -49,7 +53,8 @@ const buttons = {
   resetOutdir: document.getElementById('reset-outdir'),
   openOutdir: document.getElementById('open-outdir'),
   clear: document.getElementById('clear'),
-  convert: document.getElementById('convert')
+  convert: document.getElementById('convert'),
+  themeToggle: document.getElementById('theme-toggle')
 }
 buttons.openOutdir.prepend(icon('folderOpen'))
 buttons.resetOutdir.append(icon('x'))
@@ -58,6 +63,7 @@ const state = {
   rows: new Map(),
   outputDir: null,
   running: false,
+  dark: false,
   seq: 0
 }
 
@@ -74,6 +80,15 @@ function fileName (fullPath) {
 function parentDir (fullPath) {
   const cut = cutAt(fullPath)
   return cut < 0 ? '' : fullPath.slice(0, cut)
+}
+
+// The button advertises the theme a click will produce, not the current one, so
+// icon and label are derived together and cannot drift apart.
+function paintTheme ({ dark }) {
+  state.dark = dark
+  buttons.themeToggle.replaceChildren(icon(dark ? 'sun' : 'moon'))
+  buttons.themeToggle.title = dark ? L.themeToLight : L.themeToDark
+  buttons.themeToggle.ariaLabel = buttons.themeToggle.title
 }
 
 function showBanner (message) {
@@ -224,6 +239,10 @@ buttons.openOutdir.addEventListener('click', () => {
   openFolder(state.outputDir)
 })
 
+buttons.themeToggle.addEventListener('click', async () => {
+  paintTheme(await window.markitdown.setTheme(state.dark ? 'light' : 'dark'))
+})
+
 buttons.clear.addEventListener('click', () => {
   state.rows.clear()
   showBanner('')
@@ -265,5 +284,11 @@ dropEl.addEventListener('drop', event => {
 // Dropping anywhere else must not make Chromium navigate to the file
 window.addEventListener('dragover', event => event.preventDefault())
 window.addEventListener('drop', event => event.preventDefault())
+
+// Until the first click the app still follows the OS, so keep the icon honest
+// if the desktop theme changes underneath us.
+const darkQuery = window.matchMedia('(prefers-color-scheme: dark)')
+paintTheme({ dark: darkQuery.matches })
+darkQuery.addEventListener('change', event => paintTheme({ dark: event.matches }))
 
 render()

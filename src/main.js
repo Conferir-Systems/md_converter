@@ -4,6 +4,7 @@ const { app, BrowserWindow, ipcMain, dialog, shell, nativeTheme } = require('ele
 const { killAll } = require('./bridge')
 const { SUPPORTED_EXTENSIONS, planJobs, runQueue, requestCancel, resetCancels } = require('./queue')
 const { setupDevHooks, runSelfTest } = require('./devhooks')
+const { applyStoredTheme, setTheme, themeState } = require('./theme')
 const { t } = require('./i18n')
 
 let lastDialogDir = app.getPath('documents')
@@ -88,6 +89,11 @@ function registerIpcHandlers () {
     requestCancel(id)
     return { ok: true }
   })
+
+  ipcMain.handle('set-theme', (event, value) => {
+    setTheme(value)
+    return themeState()
+  })
 }
 
 app.whenReady().then(() => {
@@ -95,6 +101,9 @@ app.whenReady().then(() => {
     runSelfTest()
     return
   }
+  // Before createWindow: it reads shouldUseDarkColors for the pre-paint
+  // backgroundColor, which has to reflect the stored override.
+  applyStoredTheme()
   registerIpcHandlers()
   createWindow()
 })
