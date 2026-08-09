@@ -1,6 +1,6 @@
 {
-  "name": "markitdown-gui",
-  "productName": "MarkItDown GUI",
+  "name": "md-converter",
+  "productName": "MD Converter",
   "version": "0.1.0",
   "description": "Desktop GUI for Microsoft's markitdown document-to-Markdown converter",
   "main": "src/main.js",

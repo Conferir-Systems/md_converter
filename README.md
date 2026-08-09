@@ -1,4 +1,4 @@
-# MarkItDown GUI
+# MD Converter
 
 Windows 11 desktop app that converts documents to Markdown using Microsoft's
 [markitdown](https://github.com/microsoft/markitdown). Electron front end; the
@@ -14,9 +14,9 @@ deliberately out of scope.
 
 Two artifacts are produced in `release/`:
 
-- **`MarkItDown GUI Setup <version>.exe`** (NSIS installer) — recommended.
+- **`MD Converter Setup <version>.exe`** (NSIS installer) — recommended.
   Installs per-user, no administrator rights.
-- **`MarkItDown GUI <version>.exe`** (portable) — single file, no
+- **`MD Converter <version>.exe`** (portable) — single file, no
   installation. Trade-off: it re-extracts the whole app (~350 MB) to `%TEMP%`
   on **every launch**, so expect a long startup (tens of seconds) plus
   antivirus scanning of the extracted files each time.

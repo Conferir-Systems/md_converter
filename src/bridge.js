@@ -9,7 +9,9 @@ const STDERR_TAIL_LINES = 10
 
 const activeChildren = new Set()
 
-function resolveBridge () {
+let resolved = null
+
+function locateBridge () {
   const exe = 'markitdown-bridge.exe'
   if (app.isPackaged) {
     return {
@@ -27,6 +29,13 @@ function resolveBridge () {
     args: [path.join(__dirname, '..', 'python', 'bridge.py')],
     kind: 'venv python (dev)'
   }
+}
+
+// Memoized: the answer cannot change while the app runs, and convertFile()
+// asks once per file. Resolved lazily because app.isPackaged needs the app.
+function resolveBridge () {
+  if (resolved === null) resolved = locateBridge()
+  return resolved
 }
 
 function tail (text, lines) {

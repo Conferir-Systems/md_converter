@@ -1,4 +1,4 @@
-appId: com.example.markitdowngui
+appId: com.example.mdconverter
 productName: MD Converter
 directories:
   output: release

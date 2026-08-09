@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; font-src 'self'">
-  <title>MarkItDown GUI</title>
+  <title>MD Converter</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -12,11 +12,12 @@
       <div class="brand">
         <img src="assets/logo.svg" alt="" class="logo" width="36" height="36">
         <div>
-          <h1 class="wordmark">MarkItDown <span class="wordmark-accent">GUI</span></h1>
-          <p class="subtitle" id="subtitle">Converta documentos para Markdown</p>
+          <h1 class="wordmark">MD <span class="wordmark-accent">Converter</span></h1>
+          <p class="subtitle">Converta documentos para Markdown</p>
         </div>
       </div>
-      <button id="convert" class="btn btn-primary" disabled>Converter tudo</button>
+      <!-- Empty on purpose: renderer.js owns this label, it toggles while running -->
+      <button id="convert" class="btn btn-primary" disabled></button>
     </header>
 
     <section class="controls">
@@ -25,20 +26,16 @@
         Adicionar arquivos…
       </button>
       <div class="outdir">
-        <span id="outdir-label" class="outdir-label">Saída: mesma pasta de cada arquivo</span>
+        <!-- Empty on purpose: renderer.js owns this label, it tracks the chosen folder -->
+        <span id="outdir-label" class="outdir-label truncate"></span>
         <button id="choose-outdir" class="btn btn-outline btn-sm">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2" /></svg>
           Escolher pasta…
         </button>
-        <button id="reset-outdir" class="btn btn-icon btn-ghost" hidden title="Voltar para a pasta de cada arquivo">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>
-        </button>
+        <button id="reset-outdir" class="btn btn-icon btn-ghost" hidden title="Voltar para a pasta de cada arquivo"></button>
       </div>
       <span class="spacer"></span>
-      <button id="open-outdir" class="btn btn-outline btn-sm" disabled>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19l2.757 -7.351a1 1 0 0 1 .936 -.649h12.307a1 1 0 0 1 .986 1.164l-.996 5.211a2 2 0 0 1 -1.964 1.625h-14.026a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2h4l3 3h7a2 2 0 0 1 2 2v2" /></svg>
-        Abrir pasta de saída
-      </button>
+      <button id="open-outdir" class="btn btn-outline btn-sm" disabled>Abrir pasta de saída</button>
       <button id="clear" class="btn btn-outline btn-sm" disabled>Limpar lista</button>
     </section>
 
@@ -50,7 +47,8 @@
     <section id="drop" class="drop">
       <svg class="drop-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 9l5 -5l5 5" /><path d="M12 4l0 12" /></svg>
       <div class="drop-text">
-        <p id="drop-title" class="drop-title">Arraste e solte documentos aqui</p>
+        <p class="drop-title">Arraste e solte documentos aqui</p>
+        <!-- Mirrors SUPPORTED_EXTENSIONS in src/queue.js — update both together -->
         <p class="drop-sub">PDF · Word · PowerPoint · Excel · CSV · JSON · XML · HTML · TXT · ZIP</p>
       </div>
     </section>
