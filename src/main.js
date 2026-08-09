@@ -1,6 +1,6 @@
 const path = require('node:path')
 const fs = require('node:fs')
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, shell, nativeTheme } = require('electron')
 const { convertFile, resolveBridge, killAll } = require('./bridge')
 const { t } = require('./i18n')
 
@@ -93,6 +93,7 @@ function createWindow () {
     minWidth: 640,
     minHeight: 480,
     show: false,
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0c0e12' : '#e8eaee',
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,

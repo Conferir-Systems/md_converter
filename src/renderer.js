@@ -10,9 +10,21 @@ const L = {
   status: { pending: 'pendente', converting: 'convertendo', done: 'concluído', error: 'erro', canceled: 'cancelada' }
 }
 
+const ICONS = {
+  folderOpen: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19l2.757 -7.351a1 1 0 0 1 .936 -.649h12.307a1 1 0 0 1 .986 1.164l-.996 5.211a2 2 0 0 1 -1.964 1.625h-14.026a2 2 0 0 1 -2 -2v-11a2 2 0 0 1 2 -2h4l3 3h7a2 2 0 0 1 2 2v2" /></svg>',
+  x: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>'
+}
+
+function icon (name) {
+  const holder = document.createElement('span')
+  holder.innerHTML = ICONS[name]
+  return holder.firstElementChild
+}
+
 const listEl = document.getElementById('list')
 const dropEl = document.getElementById('drop')
 const bannerEl = document.getElementById('banner')
+const bannerMsgEl = document.getElementById('banner-msg')
 const outdirLabel = document.getElementById('outdir-label')
 const buttons = {
   pick: document.getElementById('pick'),
@@ -39,7 +51,7 @@ function parentDir (fullPath) {
 }
 
 function showBanner (message) {
-  bannerEl.textContent = message
+  bannerMsgEl.textContent = message
   bannerEl.hidden = !message
 }
 
@@ -67,7 +79,12 @@ function render () {
 
     const chip = document.createElement('span')
     chip.className = `chip ${row.status}`
-    chip.textContent = L.status[row.status]
+    if (row.status === 'converting') {
+      const dot = document.createElement('span')
+      dot.className = 'dot'
+      chip.append(dot)
+    }
+    chip.append(document.createTextNode(L.status[row.status]))
     item.append(chip)
 
     const meta = document.createElement('div')
@@ -89,26 +106,36 @@ function render () {
       sub.textContent = parentDir(row.input)
     }
     meta.append(sub)
+    if (row.status === 'converting') {
+      const progress = document.createElement('div')
+      progress.className = 'progress'
+      const bar = document.createElement('div')
+      bar.className = 'progress-bar'
+      progress.append(bar)
+      meta.append(progress)
+    }
     item.append(meta)
 
     const actions = document.createElement('div')
     actions.className = 'row-actions'
     if (row.status === 'done') {
       const open = document.createElement('button')
-      open.textContent = L.rowOpen
+      open.className = 'btn btn-outline btn-sm'
+      open.append(icon('folderOpen'), document.createTextNode(L.rowOpen))
       open.addEventListener('click', () => window.markitdown.openFolder(row.outputDir))
       actions.append(open)
     }
     if (state.running && ['pending', 'converting'].includes(row.status)) {
       const cancel = document.createElement('button')
-      cancel.className = 'row-cancel'
+      cancel.className = 'row-cancel btn btn-outline btn-sm'
       cancel.textContent = L.rowCancel
       cancel.addEventListener('click', () => window.markitdown.cancelJob(row.id))
       actions.append(cancel)
     }
     if (!state.running) {
       const remove = document.createElement('button')
-      remove.textContent = '×'
+      remove.className = 'btn btn-icon btn-ghost'
+      remove.append(icon('x'))
       remove.title = L.rowRemove
       remove.addEventListener('click', () => {
         state.rows.delete(row.id)
